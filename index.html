@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Календарь Заметок2</title>
+<title>Календарь Заметок</title>
 
 <style>
 *{
@@ -65,6 +65,11 @@ button{
     padding:10px;
     border-radius:10px;
     min-height:90px;
+    cursor:pointer;
+}
+
+.day:hover{
+    background:#334155;
 }
 
 .note{
@@ -73,14 +78,12 @@ button{
     padding:5px;
     border-radius:5px;
     font-size:12px;
-    cursor:pointer;
 
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
 }
 
-/* MODAL */
 .modal{
     position:fixed;
     inset:0;
@@ -120,6 +123,10 @@ textarea{height:100px;}
     width:100%;
     margin-top:10px;
 }
+
+#fullText{
+    white-space:pre-wrap;
+}
 </style>
 </head>
 
@@ -127,7 +134,7 @@ textarea{height:100px;}
 
 <div class="container">
 
-<h1>📅 Календарь Заметок2</h1>
+<h1>📅 Календарь Заметок</h1>
 
 <div class="top">
 <button class="admin" onclick="openLogin()">Админ</button>
@@ -154,10 +161,10 @@ textarea{height:100px;}
 </div>
 </div>
 
-<!-- NOTE -->
+<!-- EDIT -->
 <div class="modal" id="note">
 <div class="box">
-<h3>Заметка</h3>
+<h3>Редактировать</h3>
 <input type="number" id="day">
 <textarea id="text"></textarea>
 <button class="save" onclick="save()">Сохранить</button>
@@ -168,8 +175,8 @@ textarea{height:100px;}
 <!-- VIEW -->
 <div class="modal" id="view">
 <div class="box">
-<h3>Полный текст</h3>
-<div id="fullText" style="white-space:pre-wrap;"></div>
+<h3>Заметка</h3>
+<div id="fullText"></div>
 <button class="close" onclick="closeView()">Закрыть</button>
 </div>
 </div>
@@ -229,20 +236,14 @@ async function draw(){
 
         try{
             let snap = await getDoc(doc(db,"notes",key));
-            if(snap.exists()){
-                text = snap.data().text;
-            }
+            if(snap.exists()) text = snap.data().text;
         }catch(e){}
 
         cal.innerHTML += `
         <div class="day" onclick="openDay(${d})">
             <b>${d}</b>
 
-            ${text ? `
-                <div class="note" onclick="event.stopPropagation(); openText(\`${text.replace(/`/g,'')}\`)">
-                    ${text}
-                </div>
-            ` : ""}
+            ${text ? `<div class="note">${text}</div>` : ""}
         </div>`;
     }
 }
@@ -252,32 +253,23 @@ draw();
 function next(){ m++; if(m>11){m=0;y++;} draw(); }
 function prev(){ m--; if(m<0){m=11;y--;} draw(); }
 
-window.openText = function(text){
-    document.getElementById("view").style.display = "flex";
-    document.getElementById("fullText").innerText = text;
-}
-
-function closeView(){
-    document.getElementById("view").style.display = "none";
-}
-window.closeView = closeView;
-
 window.openDay = async function(d){
 
     let key = y+"-"+m+"-"+d;
     let snap = await getDoc(doc(db,"notes",key));
 
-    if(!admin){
-        if(snap.exists()){
-            openText(snap.data().text);
-        }
-        return;
-    }
+    let text = snap.exists() ? snap.data().text : "";
 
-    document.getElementById("note").style.display="flex";
-    document.getElementById("day").value=d;
-    document.getElementById("text").value =
-        snap.exists()?snap.data().text:"";
+    // ВСЕ пользователи видят заметку
+    document.getElementById("view").style.display = "flex";
+    document.getElementById("fullText").innerText = text;
+
+    // если админ — можно редактировать
+    if(admin){
+        document.getElementById("note").style.display = "flex";
+        document.getElementById("day").value = d;
+        document.getElementById("text").value = text;
+    }
 }
 
 function openLogin(){ document.getElementById("login").style.display="flex"; }
@@ -291,7 +283,7 @@ function login(){
     } else alert("Неверно");
 }
 
-function logout(){ admin=false; }
+function logout(){ admin = false; alert("Вы вышли"); }
 
 async function save(){
 
@@ -306,9 +298,8 @@ async function save(){
     draw();
 }
 
-function closeNote(){
-    document.getElementById("note").style.display="none";
-}
+function closeNote(){ document.getElementById("note").style.display="none"; }
+function closeView(){ document.getElementById("view").style.display="none"; }
 
 window.next = next;
 window.prev = prev;
@@ -318,6 +309,7 @@ window.login = login;
 window.logout = logout;
 window.save = save;
 window.closeNote = closeNote;
+window.closeView = closeView;
 
 </script>
 
