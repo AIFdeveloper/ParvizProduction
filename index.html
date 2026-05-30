@@ -130,7 +130,7 @@ textarea{height:100px;}
 
 <div class="container">
 
-<h1>📅 Календарь Заметок2</h1>
+<h1>📅 Календарь Заметок3</h1>
 
 <div class="top">
 <button class="admin" onclick="openLogin()">Админ</button>
@@ -170,7 +170,8 @@ textarea{height:100px;}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc } 
+from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD5MX30P9T3UbX_YwM5skDtZKX42Ad7MrY",
@@ -184,12 +185,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// делаем доступ глобально
 window.db = db;
 window.doc = doc;
 window.setDoc = setDoc;
 window.getDoc = getDoc;
-window.firebaseReady = true;
 </script>
 
 <script>
@@ -218,23 +217,29 @@ async function draw(){
 
     let days = new Date(y,m+1,0).getDate();
 
+    // 1. рисуем календарь
+    for(let d=1; d<=days; d++){
+        cal.innerHTML += `
+        <div class="day" id="day-${d}" onclick="openDay(${d})">
+            <b>${d}</b>
+        </div>`;
+    }
+
+    // 2. загружаем заметки отдельно
     for(let d=1; d<=days; d++){
 
-        let text = "";
+        let key = y+"-"+m+"-"+d;
 
-        if(window.ready){
-            try{
-                let key = y+"-"+m+"-"+d;
-                let snap = await getDoc(doc(db,"notes",key));
-                if(snap.exists()) text = snap.data().text;
-            }catch(e){}
+        try{
+            let snap = await getDoc(doc(db,"notes",key));
+
+            if(snap.exists()){
+                document.getElementById(`day-${d}`).innerHTML +=
+                    `<div class="note">${snap.data().text}</div>`;
+            }
+        } catch(e){
+            console.log(e);
         }
-
-        cal.innerHTML += `
-        <div class="day" onclick="openDay(${d})">
-            <b>${d}</b>
-            ${text ? `<div class="note">${text}</div>`:""}
-        </div>`;
     }
 }
 
@@ -266,7 +271,7 @@ function closeLogin(){ document.getElementById("login").style.display="none"; }
 function login(){
     if(document.getElementById("pass").value === PASS){
         admin = true;
-        alert("OK");
+        alert("Админ вошёл");
         closeLogin();
     } else alert("Неверно");
 }
