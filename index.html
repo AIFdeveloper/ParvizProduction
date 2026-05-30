@@ -73,6 +73,53 @@ button{
     padding:5px;
     border-radius:5px;
     font-size:12px;
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+
+    cursor:pointer;
+}
+
+/* MODAL */
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.6);
+    display:none;
+    justify-content:center;
+    align-items:center;
+}
+
+.box{
+    background:#1e293b;
+    padding:20px;
+    border-radius:10px;
+    width:320px;
+}
+
+input,textarea{
+    width:100%;
+    margin-top:10px;
+    padding:10px;
+    border-radius:8px;
+    border:none;
+}
+
+textarea{height:100px;}
+
+.save{
+    background:#16a34a;
+    color:white;
+    width:100%;
+    margin-top:10px;
+}
+
+.close{
+    background:#dc2626;
+    color:white;
+    width:100%;
+    margin-top:10px;
 }
 </style>
 </head>
@@ -81,7 +128,7 @@ button{
 
 <div class="container">
 
-<h1>📅 Календарь Заметок4</h1>
+<h1>📅 Календарь Заметок</h1>
 
 <div class="top">
 <button class="admin" onclick="openLogin()">Админ</button>
@@ -99,23 +146,32 @@ button{
 </div>
 
 <!-- LOGIN -->
-<div class="modal" id="login" style="display:none">
+<div class="modal" id="login">
 <div class="box">
 <h3>Вход</h3>
 <input type="password" id="pass">
-<button onclick="login()">Войти</button>
-<button onclick="closeLogin()">Закрыть</button>
+<button class="save" onclick="login()">Войти</button>
+<button class="close" onclick="closeLogin()">Закрыть</button>
 </div>
 </div>
 
-<!-- NOTE -->
-<div class="modal" id="note" style="display:none">
+<!-- EDIT NOTE -->
+<div class="modal" id="note">
 <div class="box">
 <h3>Заметка</h3>
 <input type="number" id="day">
 <textarea id="text"></textarea>
-<button onclick="save()">Сохранить</button>
-<button onclick="closeNote()">Закрыть</button>
+<button class="save" onclick="save()">Сохранить</button>
+<button class="close" onclick="closeNote()">Закрыть</button>
+</div>
+</div>
+
+<!-- VIEW FULL TEXT -->
+<div class="modal" id="view">
+<div class="box">
+<h3>Полный текст</h3>
+<div id="fullText" style="white-space:pre-wrap;"></div>
+<button class="close" onclick="closeView()">Закрыть</button>
 </div>
 </div>
 
@@ -124,7 +180,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebas
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
+  apiKey: "AIzaSyD5MX30P9T3UbX_YwM5skDtZKX42Ad7MrY",
   authDomain: "parvizadmin.firebaseapp.com",
   projectId: "parvizadmin",
   storageBucket: "parvizadmin.appspot.com",
@@ -148,15 +204,15 @@ const title = document.getElementById("title");
 let m = new Date().getMonth();
 let y = new Date().getFullYear();
 
-const months = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
-
 let admin = false;
 const PASS = "12345";
+
+const months = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
 
 async function draw(){
 
     cal.innerHTML = "";
-    title.innerText = months[m] + " " + y;
+    title.innerText = months[m]+" "+y;
 
     let first = new Date(y,m,1).getDay();
     first = first === 0 ? 7 : first;
@@ -170,7 +226,6 @@ async function draw(){
     for(let d=1; d<=days; d++){
 
         let key = y+"-"+m+"-"+d;
-
         let text = "";
 
         try{
@@ -181,9 +236,9 @@ async function draw(){
         }catch(e){}
 
         cal.innerHTML += `
-        <div class="day" onclick="openDay(${d})">
+        <div class="day">
             <b>${d}</b>
-            ${text ? `<div class="note">${text}</div>` : ""}
+            ${text ? `<div class="note" onclick="openText(\`${text.replace(/`/g,'')}\`)">${text}</div>` : ""}
         </div>`;
     }
 }
@@ -193,17 +248,22 @@ draw();
 function next(){ m++; if(m>11){m=0;y++;} draw(); }
 function prev(){ m--; if(m<0){m=11;y--;} draw(); }
 
+window.openText = function(text){
+    document.getElementById("view").style.display = "flex";
+    document.getElementById("fullText").innerText = text;
+}
+
+function closeView(){
+    document.getElementById("view").style.display = "none";
+}
+
+window.closeView = closeView;
+
 window.openDay = async function(d){
 
     let key = y+"-"+m+"-"+d;
     let snap = await getDoc(doc(db,"notes",key));
 
-    // ВСЕ могут читать
-    if(snap.exists()){
-        alert(snap.data().text);
-    }
-
-    // админ может редактировать
     if(admin){
         document.getElementById("note").style.display="flex";
         document.getElementById("day").value=d;
@@ -223,7 +283,7 @@ function login(){
     } else alert("Неверно");
 }
 
-function logout(){ admin=false; alert("Вышел"); }
+function logout(){ admin=false; }
 
 async function save(){
 
