@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Календарь Заметок PRO</title>
+<title>Календарь Заметок</title>
 
 <style>
 *{
@@ -133,7 +133,7 @@ textarea{height:100px;}
 
 <div class="container">
 
-<h1>📅 Календарь Заметок PRO</h1>
+<h1>📅 Календарь Заметок</h1>
 
 <div class="top">
 <button class="admin" onclick="openLogin()">Админ</button>
@@ -182,12 +182,10 @@ textarea{height:100px;}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { 
-getFirestore, doc, setDoc, getDocs, collection 
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD5MX30P9T3UbX_YwM5skDtZKX42Ad7MrY",
+apiKey: "AIzaSyD5MX30P9T3UbX_YwM5skDtZKX42Ad7MrY",
   authDomain: "parvizadmin.firebaseapp.com",
   projectId: "parvizadmin",
   storageBucket: "parvizadmin.appspot.com",
@@ -201,8 +199,7 @@ const db = getFirestore(app);
 window.db = db;
 window.doc = doc;
 window.setDoc = setDoc;
-window.getDocs = getDocs;
-window.collection = collection;
+window.getDoc = getDoc;
 </script>
 
 <script>
@@ -217,24 +214,7 @@ const PASS = "12345";
 
 const months = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
 
-// 💾 кеш заметок
-let notes = {};
-
-// 🔥 загрузка ВСЕХ заметок 1 РАЗ
-async function loadNotes(){
-    notes = {};
-
-    let snap = await getDocs(collection(db,"notes"));
-
-    snap.forEach(d=>{
-        notes[d.id] = d.data().text;
-    });
-}
-
-// 📅 календарь
 async function draw(){
-
-    await loadNotes(); // 👈 ВАЖНО
 
     cal.innerHTML = "";
     title.innerText = months[m] + " " + y;
@@ -250,8 +230,13 @@ async function draw(){
 
     for(let d=1; d<=days; d++){
 
-        let key = y+"-"+(m+1)+"-"+d;
-        let text = notes[key] || "";
+        let key = y+"-"+m+"-"+d;
+        let text = "";
+
+        try{
+            let snap = await getDoc(doc(db,"notes",key));
+            if(snap.exists()) text = snap.data().text;
+        }catch(e){}
 
         cal.innerHTML += `
         <div class="day" onclick="openDay(${d})">
@@ -261,73 +246,72 @@ async function draw(){
     }
 }
 
-draw();
+window.openDay = async function(d){
+
+    let key = y+"-"+m+"-"+d;
+    let snap = await getDoc(doc(db,"notes",key));
+
+    let text = snap.exists() ? snap.data().text : "";
+
+    document.getElementById("view").style.display = "flex";
+    document.getElementById("fullText").innerText = text;
+
+    if(admin){
+        document.getElementById("note").style.display = "flex";
+        document.getElementById("day").value = d;
+        document.getElementById("text").value = text;
+    }
+}
 
 function next(){ m++; if(m>11){m=0;y++;} draw(); }
 function prev(){ m--; if(m<0){m=11;y--;} draw(); }
 
-// 👀 открыть день
-window.openDay = function(d){
-
-    let key = y+"-"+(m+1)+"-"+d;
-    let text = notes[key] || "";
-
-    document.getElementById("view").style.display="flex";
-    document.getElementById("fullText").innerText=text;
-
-    if(admin){
-        document.getElementById("note").style.display="flex";
-        document.getElementById("day").value=d;
-        document.getElementById("text").value=text;
-    }
-}
-
-// 🔐 login
 function openLogin(){ document.getElementById("login").style.display="flex"; }
 function closeLogin(){ document.getElementById("login").style.display="none"; }
 
 function login(){
-    if(document.getElementById("pass").value===PASS){
-        admin=true;
+    if(document.getElementById("pass").value === PASS){
+        admin = true;
         alert("Админ вошёл");
         closeLogin();
     } else alert("Неверно");
 }
 
-function logout(){
-    admin=false;
-    alert("Вы вышли");
-}
+function logout(){ admin = false; alert("Вы вышли"); }
 
-// 💾 save
 async function save(){
 
-    let d=document.getElementById("day").value;
-    let t=document.getElementById("text").value;
+    let d = document.getElementById("day").value;
+    let t = document.getElementById("text").value;
 
-    let key=y+"-"+(m+1)+"-"+d;
+    let key = y+"-"+m+"-"+d;
 
-    await setDoc(doc(db,"notes",key),{
-        text:t
-    });
+    await setDoc(doc(db,"notes",key),{text:t});
 
     closeNote();
     draw();
 }
 
-// close
 function closeNote(){ document.getElementById("note").style.display="none"; }
 function closeView(){ document.getElementById("view").style.display="none"; }
 
-window.next=next;
-window.prev=prev;
-window.openLogin=openLogin;
-window.closeLogin=closeLogin;
-window.login=login;
-window.logout=logout;
-window.save=save;
-window.closeNote=closeNote;
-window.closeView=closeView;
+window.next = next;
+window.prev = prev;
+window.openLogin = openLogin;
+window.closeLogin = closeLogin;
+window.login = login;
+window.logout = logout;
+window.save = save;
+window.closeNote = closeNote;
+window.closeView = closeView;
+
+// ✅ ВАЖНО: автозапуск заметки при входе
+window.onload = async () => {
+    await draw();
+
+    let today = new Date().getDate();
+    openDay(today);
+};
 
 </script>
 
