@@ -60,20 +60,11 @@ button{
     gap:10px;
 }
 
-.day-name,.day{
+.day{
     background:#1e293b;
     padding:10px;
-    text-align:center;
     border-radius:10px;
-}
-
-.day{
     min-height:90px;
-    cursor:pointer;
-}
-
-.day:hover{
-    background:#334155;
 }
 
 .note{
@@ -83,46 +74,6 @@ button{
     border-radius:5px;
     font-size:12px;
 }
-
-.modal{
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,0.6);
-    display:none;
-    justify-content:center;
-    align-items:center;
-}
-
-.box{
-    background:#1e293b;
-    padding:20px;
-    border-radius:10px;
-    width:300px;
-}
-
-input,textarea{
-    width:100%;
-    margin-top:10px;
-    padding:10px;
-    border-radius:8px;
-    border:none;
-}
-
-textarea{height:100px;}
-
-.save{
-    background:#16a34a;
-    color:white;
-    width:100%;
-    margin-top:10px;
-}
-
-.close{
-    background:#dc2626;
-    color:white;
-    width:100%;
-    margin-top:10px;
-}
 </style>
 </head>
 
@@ -130,7 +81,7 @@ textarea{height:100px;}
 
 <div class="container">
 
-<h1>📅 Календарь Заметок3</h1>
+<h1>📅 Календарь Заметок4</h1>
 
 <div class="top">
 <button class="admin" onclick="openLogin()">Админ</button>
@@ -148,33 +99,32 @@ textarea{height:100px;}
 </div>
 
 <!-- LOGIN -->
-<div class="modal" id="login">
+<div class="modal" id="login" style="display:none">
 <div class="box">
 <h3>Вход</h3>
 <input type="password" id="pass">
-<button class="save" onclick="login()">Войти</button>
-<button class="close" onclick="closeLogin()">Закрыть</button>
+<button onclick="login()">Войти</button>
+<button onclick="closeLogin()">Закрыть</button>
 </div>
 </div>
 
 <!-- NOTE -->
-<div class="modal" id="note">
+<div class="modal" id="note" style="display:none">
 <div class="box">
 <h3>Заметка</h3>
 <input type="number" id="day">
 <textarea id="text"></textarea>
-<button class="save" onclick="save()">Сохранить</button>
-<button class="close" onclick="closeNote()">Закрыть</button>
+<button onclick="save()">Сохранить</button>
+<button onclick="closeNote()">Закрыть</button>
 </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc } 
-from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD5MX30P9T3UbX_YwM5skDtZKX42Ad7MrY",
+  apiKey: "YOUR_API_KEY",
   authDomain: "parvizadmin.firebaseapp.com",
   projectId: "parvizadmin",
   storageBucket: "parvizadmin.appspot.com",
@@ -198,15 +148,15 @@ const title = document.getElementById("title");
 let m = new Date().getMonth();
 let y = new Date().getFullYear();
 
+const months = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
+
 let admin = false;
 const PASS = "12345";
-
-const months = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
 
 async function draw(){
 
     cal.innerHTML = "";
-    title.innerText = months[m]+" "+y;
+    title.innerText = months[m] + " " + y;
 
     let first = new Date(y,m,1).getDay();
     first = first === 0 ? 7 : first;
@@ -217,29 +167,24 @@ async function draw(){
 
     let days = new Date(y,m+1,0).getDate();
 
-    // 1. рисуем календарь
-    for(let d=1; d<=days; d++){
-        cal.innerHTML += `
-        <div class="day" id="day-${d}" onclick="openDay(${d})">
-            <b>${d}</b>
-        </div>`;
-    }
-
-    // 2. загружаем заметки отдельно
     for(let d=1; d<=days; d++){
 
         let key = y+"-"+m+"-"+d;
 
+        let text = "";
+
         try{
             let snap = await getDoc(doc(db,"notes",key));
-
             if(snap.exists()){
-                document.getElementById(`day-${d}`).innerHTML +=
-                    `<div class="note">${snap.data().text}</div>`;
+                text = snap.data().text;
             }
-        } catch(e){
-            console.log(e);
-        }
+        }catch(e){}
+
+        cal.innerHTML += `
+        <div class="day" onclick="openDay(${d})">
+            <b>${d}</b>
+            ${text ? `<div class="note">${text}</div>` : ""}
+        </div>`;
     }
 }
 
@@ -251,18 +196,20 @@ function prev(){ m--; if(m<0){m=11;y--;} draw(); }
 window.openDay = async function(d){
 
     let key = y+"-"+m+"-"+d;
-
     let snap = await getDoc(doc(db,"notes",key));
 
-    if(!admin){
-        if(snap.exists()) alert(snap.data().text);
-        return;
+    // ВСЕ могут читать
+    if(snap.exists()){
+        alert(snap.data().text);
     }
 
-    document.getElementById("note").style.display="flex";
-    document.getElementById("day").value=d;
-    document.getElementById("text").value =
-        snap.exists()?snap.data().text:"";
+    // админ может редактировать
+    if(admin){
+        document.getElementById("note").style.display="flex";
+        document.getElementById("day").value=d;
+        document.getElementById("text").value =
+            snap.exists()?snap.data().text:"";
+    }
 }
 
 function openLogin(){ document.getElementById("login").style.display="flex"; }
@@ -291,7 +238,9 @@ async function save(){
     draw();
 }
 
-function closeNote(){ document.getElementById("note").style.display="none"; }
+function closeNote(){
+    document.getElementById("note").style.display="none";
+}
 
 window.next = next;
 window.prev = prev;
