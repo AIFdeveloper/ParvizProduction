@@ -1,86 +1,57 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Календарь Заметок</title>
 
 <style>
-
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
-    font-family:Arial,sans-serif;
+    font-family:Arial;
 }
 
 body{
     background:#0f172a;
     color:white;
     padding:20px;
-    min-height:100vh;
 }
 
 .container{
-    max-width:1200px;
+    max-width:1000px;
     margin:auto;
 }
 
 h1{
     text-align:center;
     margin-bottom:20px;
-    font-size:40px;
 }
 
-.info{
-    text-align:center;
-    color:#cbd5e1;
-    margin-bottom:20px;
-}
-
-.top-panel{
+.top{
     display:flex;
     justify-content:center;
-    gap:15px;
+    gap:10px;
     margin-bottom:20px;
-    flex-wrap:wrap;
 }
 
 button{
-    padding:12px 20px;
+    padding:10px 15px;
     border:none;
-    border-radius:10px;
+    border-radius:8px;
     cursor:pointer;
-    font-size:16px;
-    transition:0.3s;
 }
 
-button:hover{
-    transform:scale(1.05);
-}
+.admin{background:#2563eb;color:white;}
+.logout{background:#dc2626;color:white;}
 
-.admin-btn{
-    background:#2563eb;
-    color:white;
-}
-
-.logout-btn{
-    background:#dc2626;
-    color:white;
-}
-
-.month-control{
+.month{
     display:flex;
     justify-content:center;
     align-items:center;
-    gap:20px;
+    gap:15px;
     margin-bottom:20px;
-}
-
-.month-control h2{
-    font-size:30px;
 }
 
 .calendar{
@@ -89,148 +60,87 @@ button:hover{
     gap:10px;
 }
 
-.day-name{
+.day-name,.day{
     background:#1e293b;
-    padding:15px;
+    padding:10px;
     text-align:center;
     border-radius:10px;
-    font-weight:bold;
 }
 
 .day{
-    background:#1e293b;
-    min-height:120px;
-    padding:10px;
-    border-radius:12px;
+    min-height:90px;
     cursor:pointer;
-    transition:0.3s;
-    overflow:hidden;
 }
 
 .day:hover{
     background:#334155;
 }
 
-.day-number{
-    font-size:18px;
-    margin-bottom:10px;
-    font-weight:bold;
-}
-
 .note{
     background:#2563eb;
-    padding:8px;
-    border-radius:8px;
     margin-top:5px;
-    font-size:14px;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    display:-webkit-box;
-    -webkit-line-clamp:3;
-    -webkit-box-orient:vertical;
+    padding:5px;
+    border-radius:5px;
+    font-size:12px;
 }
 
 .modal{
     position:fixed;
     inset:0;
-    background:rgba(0,0,0,0.7);
+    background:rgba(0,0,0,0.6);
     display:none;
     justify-content:center;
     align-items:center;
-    z-index:100;
 }
 
-.modal-content{
+.box{
     background:#1e293b;
-    width:90%;
-    max-width:450px;
-    padding:25px;
-    border-radius:20px;
-}
-
-.modal-content h2{
-    margin-bottom:20px;
-}
-
-input, textarea{
-    width:100%;
-    padding:12px;
-    margin-bottom:15px;
-    border:none;
+    padding:20px;
     border-radius:10px;
-    background:#334155;
-    color:white;
-    font-size:16px;
+    width:300px;
 }
 
-textarea{
-    resize:none;
-    height:140px;
-}
-
-.save-btn{
-    background:#16a34a;
-    color:white;
+input,textarea{
     width:100%;
+    margin-top:10px;
+    padding:10px;
+    border-radius:8px;
+    border:none;
 }
 
-.close-btn{
-    background:#dc2626;
+textarea{height:100px;}
+
+.save{
+    background:#16a34a;
     color:white;
     width:100%;
     margin-top:10px;
 }
 
-#viewText{
-    background:#334155;
-    padding:15px;
-    border-radius:10px;
-    min-height:150px;
-    line-height:1.7;
-    white-space:pre-wrap;
+.close{
+    background:#dc2626;
+    color:white;
+    width:100%;
+    margin-top:10px;
 }
-
-@media(max-width:700px){
-
-    .calendar{
-        grid-template-columns:repeat(2,1fr);
-    }
-
-}
-
 </style>
 </head>
+
 <body>
 
 <div class="container">
 
 <h1>📅 Календарь Заметок</h1>
 
-<div class="info">
-Только админ может добавлять и редактировать заметки.
-Пользователи могут только читать.
+<div class="top">
+<button class="admin" onclick="openLogin()">Админ</button>
+<button class="logout" onclick="logout()">Выйти</button>
 </div>
 
-<div class="top-panel">
-
-<button class="admin-btn" onclick="openLogin()">
-Вход Админа
-</button>
-
-<button class="logout-btn" onclick="logout()">
-Выйти
-</button>
-
-</div>
-
-<div class="month-control">
-
-<button onclick="prevMonth()">⬅</button>
-
-<h2 id="monthTitle"></h2>
-
-<button onclick="nextMonth()">➡</button>
-
+<div class="month">
+<button onclick="prev()">⬅</button>
+<h2 id="title"></h2>
+<button onclick="next()">➡</button>
 </div>
 
 <div class="calendar" id="calendar"></div>
@@ -238,347 +148,153 @@ textarea{
 </div>
 
 <!-- LOGIN -->
-
-<div class="modal" id="loginModal">
-
-<div class="modal-content">
-
-<h2>Вход Админа</h2>
-
-<input
-type="password"
-id="adminPassword"
-placeholder="Введите пароль">
-
-<button
-class="save-btn"
-onclick="login()">
-Войти
-</button>
-
-<button
-class="close-btn"
-onclick="closeLogin()">
-Закрыть
-</button>
-
+<div class="modal" id="login">
+<div class="box">
+<h3>Вход</h3>
+<input type="password" id="pass">
+<button class="save" onclick="login()">Войти</button>
+<button class="close" onclick="closeLogin()">Закрыть</button>
+</div>
 </div>
 
+<!-- NOTE -->
+<div class="modal" id="note">
+<div class="box">
+<h3>Заметка</h3>
+<input type="number" id="day">
+<textarea id="text"></textarea>
+<button class="save" onclick="save()">Сохранить</button>
+<button class="close" onclick="closeNote()">Закрыть</button>
+</div>
 </div>
 
-<!-- ADD NOTE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-<div class="modal" id="noteModal">
+const firebaseConfig = {
+  apiKey: "AIzaSyD5MX30P9T3UbX_YwM5skDtZKX42Ad7MrY",
+  authDomain: "parvizadmin.firebaseapp.com",
+  projectId: "parvizadmin",
+  storageBucket: "parvizadmin.firebasestorage.app",
+  messagingSenderId: "494437832678",
+  appId: "1:494437832678:web:79cbdc7a814ce8ce406827"
+};
 
-<div class="modal-content">
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-<h2>Добавить заметку</h2>
-
-<input
-type="number"
-id="noteDay"
-placeholder="День">
-
-<textarea
-id="noteText"
-placeholder="Введите текст">
-</textarea>
-
-<button
-class="save-btn"
-onclick="saveNote()">
-Сохранить
-</button>
-
-<button
-class="close-btn"
-onclick="closeNoteModal()">
-Закрыть
-</button>
-
-</div>
-
-</div>
-
-<!-- VIEW NOTE -->
-
-<div class="modal" id="viewModal">
-
-<div class="modal-content">
-
-<h2>Заметка</h2>
-
-<div id="viewText"></div>
-
-<button
-class="close-btn"
-onclick="closeViewModal()">
-Закрыть
-</button>
-
-</div>
-
-</div>
+window.db = db;
+window.doc = doc;
+window.setDoc = setDoc;
+window.getDoc = getDoc;
+window.ready = true;
+</script>
 
 <script>
+const cal = document.getElementById("calendar");
+const title = document.getElementById("title");
 
-const calendar =
-document.getElementById("calendar");
+let m = new Date().getMonth();
+let y = new Date().getFullYear();
 
-const monthTitle =
-document.getElementById("monthTitle");
+let admin = false;
+const PASS = "12345";
 
-const months = [
-"Январь","Февраль","Март","Апрель",
-"Май","Июнь","Июль","Август",
-"Сентябрь","Октябрь","Ноябрь","Декабрь"
-];
+const months = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
 
-const days = [
-"Пн","Вт","Ср","Чт","Пт","Сб","Вс"
-];
+async function draw(){
 
-let currentMonth = new Date().getMonth();
+    cal.innerHTML = "";
+    title.innerText = months[m]+" "+y;
 
-let currentYear = new Date().getFullYear();
+    let first = new Date(y,m,1).getDay();
+    first = first === 0 ? 7 : first;
 
-let isAdmin = false;
+    for(let i=1;i<first;i++){
+        cal.innerHTML += `<div></div>`;
+    }
 
-const ADMIN_PASSWORD = "12345";
+    let days = new Date(y,m+1,0).getDate();
 
-function createCalendar(){
+    for(let d=1; d<=days; d++){
 
-    calendar.innerHTML = "";
+        let text = "";
 
-    monthTitle.innerText =
-    months[currentMonth] + " " + currentYear;
-
-    days.forEach(day=>{
-
-        calendar.innerHTML += `
-        <div class="day-name">
-            ${day}
-        </div>
-        `;
-
-    });
-
-    const daysInMonth =
-    new Date(
-        currentYear,
-        currentMonth + 1,
-        0
-    ).getDate();
-
-    const savedNotes =
-    JSON.parse(
-        localStorage.getItem("notes")
-    ) || {};
-
-    for(let i=1;i<=daysInMonth;i++){
-
-        const key =
-        currentYear + "-" +
-        currentMonth + "-" +
-        i;
-
-        let noteHTML = "";
-
-        if(savedNotes[key]){
-
-            noteHTML = `
-            <div class="note">
-                ${savedNotes[key]}
-            </div>
-            `;
+        if(window.ready){
+            try{
+                let key = y+"-"+m+"-"+d;
+                let snap = await getDoc(doc(db,"notes",key));
+                if(snap.exists()) text = snap.data().text;
+            }catch(e){}
         }
 
-        calendar.innerHTML += `
-        <div
-        class="day"
-        onclick="openNoteModal(${i})">
-
-            <div class="day-number">
-                ${i}
-            </div>
-
-            ${noteHTML}
-
-        </div>
-        `;
+        cal.innerHTML += `
+        <div class="day" onclick="openDay(${d})">
+            <b>${d}</b>
+            ${text ? `<div class="note">${text}</div>`:""}
+        </div>`;
     }
 }
 
-createCalendar();
+draw();
 
-function nextMonth(){
+function next(){ m++; if(m>11){m=0;y++;} draw(); }
+function prev(){ m--; if(m<0){m=11;y--;} draw(); }
 
-    currentMonth++;
+window.openDay = async function(d){
 
-    if(currentMonth > 11){
+    let key = y+"-"+m+"-"+d;
 
-        currentMonth = 0;
+    let snap = await getDoc(doc(db,"notes",key));
 
-        currentYear++;
-    }
-
-    createCalendar();
-}
-
-function prevMonth(){
-
-    currentMonth--;
-
-    if(currentMonth < 0){
-
-        currentMonth = 11;
-
-        currentYear--;
-    }
-
-    createCalendar();
-}
-
-function openLogin(){
-
-    document.getElementById(
-        "loginModal"
-    ).style.display = "flex";
-}
-
-function closeLogin(){
-
-    document.getElementById(
-        "loginModal"
-    ).style.display = "none";
-}
-
-function login(){
-
-    const password =
-    document.getElementById(
-        "adminPassword"
-    ).value;
-
-    if(password === ADMIN_PASSWORD){
-
-        isAdmin = true;
-
-        alert("Вы вошли как админ");
-
-        closeLogin();
-
-    }else{
-
-        alert("Неверный пароль");
-    }
-}
-
-function logout(){
-
-    isAdmin = false;
-
-    alert("Вы вышли");
-}
-
-function openNoteModal(day){
-
-    const key =
-    currentYear + "-" +
-    currentMonth + "-" +
-    day;
-
-    const notes =
-    JSON.parse(
-        localStorage.getItem("notes")
-    ) || {};
-
-    const noteText = notes[key];
-
-    // USER READ ONLY
-
-    if(!isAdmin){
-
-        if(noteText){
-
-            document.getElementById(
-                "viewModal"
-            ).style.display = "flex";
-
-            document.getElementById(
-                "viewText"
-            ).innerText = noteText;
-        }
-
+    if(!admin){
+        if(snap.exists()) alert(snap.data().text);
         return;
     }
 
-    // ADMIN EDIT
-
-    document.getElementById(
-        "noteModal"
-    ).style.display = "flex";
-
-    document.getElementById(
-        "noteDay"
-    ).value = day;
-
-    document.getElementById(
-        "noteText"
-    ).value = noteText || "";
+    document.getElementById("note").style.display="flex";
+    document.getElementById("day").value=d;
+    document.getElementById("text").value =
+        snap.exists()?snap.data().text:"";
 }
 
-function closeNoteModal(){
+function openLogin(){ document.getElementById("login").style.display="flex"; }
+function closeLogin(){ document.getElementById("login").style.display="none"; }
 
-    document.getElementById(
-        "noteModal"
-    ).style.display = "none";
+function login(){
+    if(document.getElementById("pass").value === PASS){
+        admin = true;
+        alert("OK");
+        closeLogin();
+    } else alert("Неверно");
 }
 
-function closeViewModal(){
+function logout(){ admin=false; alert("Вышел"); }
 
-    document.getElementById(
-        "viewModal"
-    ).style.display = "none";
+async function save(){
+
+    let d = document.getElementById("day").value;
+    let t = document.getElementById("text").value;
+
+    let key = y+"-"+m+"-"+d;
+
+    await setDoc(doc(db,"notes",key),{text:t});
+
+    closeNote();
+    draw();
 }
 
-function saveNote(){
+function closeNote(){ document.getElementById("note").style.display="none"; }
 
-    const day =
-    document.getElementById(
-        "noteDay"
-    ).value;
-
-    const text =
-    document.getElementById(
-        "noteText"
-    ).value;
-
-    const key =
-    currentYear + "-" +
-    currentMonth + "-" +
-    day;
-
-    let notes =
-    JSON.parse(
-        localStorage.getItem("notes")
-    ) || {};
-
-    notes[key] = text;
-
-    localStorage.setItem(
-        "notes",
-        JSON.stringify(notes)
-    );
-
-    closeNoteModal();
-
-    createCalendar();
-
-    document.getElementById(
-        "noteText"
-    ).value = "";
-}
+window.next = next;
+window.prev = prev;
+window.openLogin = openLogin;
+window.closeLogin = closeLogin;
+window.login = login;
+window.logout = logout;
+window.save = save;
+window.closeNote = closeNote;
 
 </script>
 
