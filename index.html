@@ -130,7 +130,7 @@ textarea{height:100px;}
 
 <div class="container">
 
-<h1>📅 Календарь Заметок</h1>
+<h1>📅 Календарь Заметок2</h1>
 
 <div class="top">
 <button class="admin" onclick="openLogin()">Админ</button>
@@ -176,7 +176,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyD5MX30P9T3UbX_YwM5skDtZKX42Ad7MrY",
   authDomain: "parvizadmin.firebaseapp.com",
   projectId: "parvizadmin",
-  storageBucket: "parvizadmin.firebasestorage.app",
+  storageBucket: "parvizadmin.appspot.com",
   messagingSenderId: "494437832678",
   appId: "1:494437832678:web:79cbdc7a814ce8ce406827"
 };
@@ -184,11 +184,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// делаем доступ глобально
 window.db = db;
 window.doc = doc;
 window.setDoc = setDoc;
 window.getDoc = getDoc;
-window.ready = true;
+window.firebaseReady = true;
 </script>
 
 <script>
