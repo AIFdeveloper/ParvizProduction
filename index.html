@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Календарь Заметок</title>
+<title>Календарь Заметок2</title>
 
 <style>
 *{
@@ -73,12 +73,11 @@ button{
     padding:5px;
     border-radius:5px;
     font-size:12px;
+    cursor:pointer;
 
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
-
-    cursor:pointer;
 }
 
 /* MODAL */
@@ -128,7 +127,7 @@ textarea{height:100px;}
 
 <div class="container">
 
-<h1>📅 Календарь Заметок</h1>
+<h1>📅 Календарь Заметок2</h1>
 
 <div class="top">
 <button class="admin" onclick="openLogin()">Админ</button>
@@ -155,7 +154,7 @@ textarea{height:100px;}
 </div>
 </div>
 
-<!-- EDIT NOTE -->
+<!-- NOTE -->
 <div class="modal" id="note">
 <div class="box">
 <h3>Заметка</h3>
@@ -166,7 +165,7 @@ textarea{height:100px;}
 </div>
 </div>
 
-<!-- VIEW FULL TEXT -->
+<!-- VIEW -->
 <div class="modal" id="view">
 <div class="box">
 <h3>Полный текст</h3>
@@ -212,7 +211,7 @@ const months = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","
 async function draw(){
 
     cal.innerHTML = "";
-    title.innerText = months[m]+" "+y;
+    title.innerText = months[m] + " " + y;
 
     let first = new Date(y,m,1).getDay();
     first = first === 0 ? 7 : first;
@@ -236,9 +235,14 @@ async function draw(){
         }catch(e){}
 
         cal.innerHTML += `
-        <div class="day">
+        <div class="day" onclick="openDay(${d})">
             <b>${d}</b>
-            ${text ? `<div class="note" onclick="openText(\`${text.replace(/`/g,'')}\`)">${text}</div>` : ""}
+
+            ${text ? `
+                <div class="note" onclick="event.stopPropagation(); openText(\`${text.replace(/`/g,'')}\`)">
+                    ${text}
+                </div>
+            ` : ""}
         </div>`;
     }
 }
@@ -256,7 +260,6 @@ window.openText = function(text){
 function closeView(){
     document.getElementById("view").style.display = "none";
 }
-
 window.closeView = closeView;
 
 window.openDay = async function(d){
@@ -264,12 +267,17 @@ window.openDay = async function(d){
     let key = y+"-"+m+"-"+d;
     let snap = await getDoc(doc(db,"notes",key));
 
-    if(admin){
-        document.getElementById("note").style.display="flex";
-        document.getElementById("day").value=d;
-        document.getElementById("text").value =
-            snap.exists()?snap.data().text:"";
+    if(!admin){
+        if(snap.exists()){
+            openText(snap.data().text);
+        }
+        return;
     }
+
+    document.getElementById("note").style.display="flex";
+    document.getElementById("day").value=d;
+    document.getElementById("text").value =
+        snap.exists()?snap.data().text:"";
 }
 
 function openLogin(){ document.getElementById("login").style.display="flex"; }
